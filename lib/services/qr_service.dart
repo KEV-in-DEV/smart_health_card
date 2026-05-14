@@ -1,19 +1,17 @@
 import 'dart:async';
-import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:smart_health_card/models/public_info.dart';
 
 class QrService implements IQrService {
-  
   /// Scanne un QR code et retourne les infos publiques
   @override
   Future<PublicInfo> scanQR() async {
     final completer = Completer<PublicInfo>();
-    
+
     final controller = MobileScannerController();
-    
+
     final scanner = MobileScanner(
       controller: controller,
       onDetect: (capture) {
@@ -40,49 +38,50 @@ class QrService implements IQrService {
         }
       },
     );
-    
+
     // Affiche le scanner dans un dialog
     final context = navigatorKey.currentContext;
     if (context != null) {
       showDialog(
         context: context,
         barrierDismissible: false,
-        builder: (context) => Dialog(
-          child: SizedBox(
-            width: 300,
-            height: 350,
-            child: Column(
-              children: [
-                const Padding(
-                  padding: EdgeInsets.all(8.0),
-                  child: Text("Scannez le QR code"),
+        builder:
+            (context) => Dialog(
+              child: SizedBox(
+                width: 300,
+                height: 350,
+                child: Column(
+                  children: [
+                    const Padding(
+                      padding: EdgeInsets.all(8.0),
+                      child: Text("Scannez le QR code"),
+                    ),
+                    Expanded(child: scanner),
+                    TextButton(
+                      onPressed: () {
+                        controller.stop();
+                        Navigator.pop(context);
+                        if (!completer.isCompleted) {
+                          completer.completeError("Scan annulé");
+                        }
+                      },
+                      child: const Text("Annuler"),
+                    ),
+                  ],
                 ),
-                Expanded(child: scanner),
-                TextButton(
-                  onPressed: () {
-                    controller.stop();
-                    Navigator.pop(context);
-                    if (!completer.isCompleted) {
-                      completer.completeError("Scan annulé");
-                    }
-                  },
-                  child: const Text("Annuler"),
-                ),
-              ],
+              ),
             ),
-          ),
-        ),
       );
     }
-    
+
     return completer.future;
   }
-  
+
   /// Génère un QR code à partir des infos publiques
   @override
   Widget generateQR(PublicInfo info) {
     final qrString = info.toQrString();
-    
+
     return QrImageView(
       data: qrString,
       version: QrVersions.auto,

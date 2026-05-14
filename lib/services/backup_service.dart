@@ -15,20 +15,22 @@ class BackupService {
     // Récupérer toutes les données
     final patients = await _getAllPatients();
     final history = await _storage.getAllHistory();
-    
+
     final exportData = {
       'version': 1,
       'exportDate': DateTime.now().toIso8601String(),
       'patients': patients.map((p) => p.toJson()).toList(),
       'history': history.map((h) => h.toJson()).toList(),
     };
-    
+
     final jsonString = jsonEncode(exportData);
     final encrypted = await _encryption.encrypt(jsonString);
-    
+
     final directory = await getApplicationDocumentsDirectory();
-    final file = File('${directory.path}/smart_health_backup_${DateTime.now().millisecondsSinceEpoch}.enc');
-    
+    final file = File(
+      '${directory.path}/smart_health_backup_${DateTime.now().millisecondsSinceEpoch}.enc',
+    );
+
     await file.writeAsString(encrypted);
     return file;
   }
@@ -38,26 +40,26 @@ class BackupService {
     final encrypted = await file.readAsString();
     final jsonString = await _encryption.decrypt(encrypted);
     final Map<String, dynamic> data = jsonDecode(jsonString);
-    
+
     // Vérification de version
     if (data['version'] != 1) {
       throw Exception('Version de backup incompatible');
     }
-    
+
     // Import patients
-    final patients = (data['patients'] as List)
-        .map((p) => Patient.fromJson(p))
-        .toList();
-    
+    final patients =
+        (data['patients'] as List).map((p) => Patient.fromJson(p)).toList();
+
     for (final patient in patients) {
       await _storage.savePatient(patient);
     }
-    
+
     // Import history
-    final history = (data['history'] as List)
-        .map((h) => MedicalRecord.fromJson(h))
-        .toList();
-    
+    final history =
+        (data['history'] as List)
+            .map((h) => MedicalRecord.fromJson(h))
+            .toList();
+
     for (final record in history) {
       await _storage.addHistoryRecord(record);
     }
@@ -73,7 +75,7 @@ class BackupService {
   Future<Map<String, dynamic>> integrityReport() async {
     final patients = await _getAllPatients();
     final history = await _storage.getAllHistory();
-    
+
     return {
       'totalPatients': patients.length,
       'totalHistoryRecords': history.length,

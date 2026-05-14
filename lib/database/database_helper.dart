@@ -72,8 +72,12 @@ class DatabaseHelper {
 
     // Index pour les requêtes rapides
     await db.execute('CREATE INDEX idx_patient_name ON patients(lastName)');
-    await db.execute('CREATE INDEX idx_history_patient ON medical_history(patientId)');
-    await db.execute('CREATE INDEX idx_history_timestamp ON medical_history(timestamp)');
+    await db.execute(
+      'CREATE INDEX idx_history_patient ON medical_history(patientId)',
+    );
+    await db.execute(
+      'CREATE INDEX idx_history_timestamp ON medical_history(timestamp)',
+    );
   }
 
   Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
@@ -113,11 +117,7 @@ class DatabaseHelper {
   /// Récupère les N derniers patients
   Future<List<Map<String, dynamic>>> getRecentPatients({int limit = 10}) async {
     final db = await database;
-    return await db.query(
-      'patients',
-      orderBy: 'updatedAt DESC',
-      limit: limit,
-    );
+    return await db.query('patients', orderBy: 'updatedAt DESC', limit: limit);
   }
 
   /// Supprime un patient
@@ -135,7 +135,9 @@ class DatabaseHelper {
   }
 
   /// Récupère l'historique d'un patient
-  Future<List<Map<String, dynamic>>> getHistoryForPatient(String patientId) async {
+  Future<List<Map<String, dynamic>>> getHistoryForPatient(
+    String patientId,
+  ) async {
     final db = await database;
     return await db.query(
       'medical_history',
@@ -156,7 +158,11 @@ class DatabaseHelper {
   /// Ajoute un agent
   Future<void> insertAgent(Map<String, dynamic> agent) async {
     final db = await database;
-    await db.insert('agents', agent, conflictAlgorithm: ConflictAlgorithm.replace);
+    await db.insert(
+      'agents',
+      agent,
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
   }
 
   /// Récupère un agent par ID
@@ -171,7 +177,10 @@ class DatabaseHelper {
   }
 
   /// Vérifie les identifiants
-  Future<Map<String, dynamic>?> authenticateAgent(String id, String hashedPassword) async {
+  Future<Map<String, dynamic>?> authenticateAgent(
+    String id,
+    String hashedPassword,
+  ) async {
     final db = await database;
     final List<Map<String, dynamic>> result = await db.query(
       'agents',

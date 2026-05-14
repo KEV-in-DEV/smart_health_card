@@ -26,12 +26,7 @@ class Agent {
 
   /// Convertit en JSON
   Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'name': name,
-      'hospital': hospital,
-      'role': role,
-    };
+    return {'id': id, 'name': name, 'hospital': hospital, 'role': role};
   }
 
   /// Crée depuis Map SQLite

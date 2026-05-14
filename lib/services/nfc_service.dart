@@ -1,139 +1,104 @@
 import 'dart:convert';
+
 import 'package:flutter_nfc_kit/flutter_nfc_kit.dart';
+import 'package:ndef/records/well_known/text.dart';
 import 'package:smart_health_card/models/patient.dart';
 import 'package:smart_health_card/services/encryption_service.dart';
 
 class NfcService implements INfcService {
   final EncryptionService _encryption = EncryptionService();
-  
-  /// Vérifie si le NFC est disponible
+
   @override
   Future<bool> isAvailable() async {
     try {
       final availability = await FlutterNfcKit.nfcAvailability;
       return availability == NFCAvailability.available;
-    } catch (e) {
+    } catch (_) {
       return false;
     }
   }
-  
-  /// Vérifie si le NFC est activé
+
   @override
   Future<bool> isEnabled() async {
-    try {
-      final availability = await FlutterNfcKit.nfcAvailability;
-      return availability == NFCAvailability.available;
-    } catch (e) {
-      return false;
-    }
+    return isAvailable();
   }
-  
-  /// Lit une carte NFC et retourne le Patient
+
   @override
   Future<Patient?> readCard() async {
     try {
-      // Attend la pose d'une carte
-      final NFCTag tag = await FlutterNfcKit.poll();
-      
-      // Récupère l'UID de la carte
-      final cardUid = tag.id;
-      print("UID carte: $cardUid");
-      
-      // Récupère les données NDEF
-      final NFCMap? data = await FlutterNfcKit.ndefRead();
-      
-      if (data == null) {
-        throw Exception("Aucune donnée NDEF trouvée");
+      await FlutterNfcKit.poll();
+      final records = await FlutterNfcKit.readNDEFRecords(cached: false);
+      if (records.isEmpty) {
+        throw Exception('Aucune donnée NDEF trouvée');
       }
-      
-      // Extrait le message
-      final String? rawData = data['message'];
-      
+
+      final textRecords = records.whereType<TextRecord>();
+      final rawData =
+          textRecords.isNotEmpty
+              ? textRecords.first.text
+              : records.first.payload?.isNotEmpty == true
+              ? utf8.decode(records.first.payload!)
+              : null;
+
       if (rawData == null || rawData.isEmpty) {
-        throw Exception("Données invalides sur la carte");
+        throw Exception('Données invalides sur la carte');
       }
-      
-      print("Données brutes: $rawData");
-      
-      // Déchiffre les données
-      String decryptedData;
+
+      String decodedData;
       try {
-        decryptedData = await _encryption.decrypt(rawData);
-      } catch (e) {
-        print("Déchiffrement impossible, lecture en clair: $e");
-        decryptedData = rawData;
+        decodedData = await _encryption.decrypt(rawData);
+      } catch (_) {
+        decodedData = rawData;
       }
-      
-      // Parse le JSON
-      final Map<String, dynamic> jsonData = jsonDecode(decryptedData);
-      
-      // Reconstruit le Patient
-      final patient = Patient.fromJson(jsonData);
-      
-      // Arrête la session NFC
-      await FlutterNfcKit.finish();
-      
-      return patient;
-      
-    } catch (e) {
-      await FlutterNfcKit.finish();
-      print("Erreur lecture NFC: $e");
+
+      final jsonData = jsonDecode(decodedData) as Map<String, dynamic>;
+      return Patient.fromJson(jsonData);
+    } catch (_) {
       return null;
+    } finally {
+      await _finishSession();
     }
   }
-  
-  /// Écrit les données du patient sur la carte NFC
+
   @override
   Future<bool> writeCard(Patient patient, String writePassword) async {
     try {
-      // Attend la pose d'une carte
-      final NFCTag tag = await FlutterNfcKit.poll();
-      
-      print("Carte détectée: ${tag.id}");
-      
-      // Prépare les données JSON
-      final jsonData = patient.toJson();
-      final jsonString = jsonEncode(jsonData);
-      
-      // Chiffre les données
+      await FlutterNfcKit.poll();
+      final jsonString = jsonEncode(patient.toJson());
       final encryptedData = await _encryption.encrypt(jsonString);
-      
-      // Prépare le message NDEF
-      final ndefMessage = {
-        'message': encryptedData,
-        'type': 'text/plain',
-      };
-      
-      // Écrit sur la carte
-      await FlutterNfcKit.ndefWrite(ndefMessage);
-      
-      // Arrête la session
-      await FlutterNfcKit.finish();
-      
+
+      await FlutterNfcKit.writeNDEFRecords([
+        TextRecord(language: 'fr', text: encryptedData),
+      ]);
+
       return true;
-      
-    } catch (e) {
-      await FlutterNfcKit.finish();
-      print("Erreur écriture NFC: $e");
+    } catch (_) {
       return false;
+    } finally {
+      await _finishSession();
     }
   }
-  
-  /// Récupère l'UID de la carte
+
   Future<String> getCardUid() async {
     try {
-      final NFCTag tag = await FlutterNfcKit.poll();
-      final uid = tag.id;
+      final tag = await FlutterNfcKit.poll();
+      return tag.id;
+    } catch (_) {
+      return '';
+    } finally {
+      await _finishSession();
+    }
+  }
+
+  Future<void> _finishSession() async {
+    try {
       await FlutterNfcKit.finish();
-      return uid;
-    } catch (e) {
-      await FlutterNfcKit.finish();
-      return "";
+    } catch (_) {
+      // Session may already be closed.
     }
   }
 }
 
-// Interface définie par l'équipe
 abstract class INfcService {
   Future<bool> isAvailable();
   Future<bool> isEnabled();

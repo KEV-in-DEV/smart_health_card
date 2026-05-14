@@ -29,13 +29,13 @@ class PublicInfo {
     String name = '';
     String bloodType = '';
     String emergencyPhone = '';
-    
+
     for (final part in parts) {
       if (part.startsWith('name:')) name = part.substring(5);
       if (part.startsWith('blood:')) bloodType = part.substring(6);
       if (part.startsWith('phone:')) emergencyPhone = part.substring(6);
     }
-    
+
     return PublicInfo(
       name: name,
       bloodType: bloodType,

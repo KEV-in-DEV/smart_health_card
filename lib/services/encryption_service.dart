@@ -21,24 +21,23 @@ class EncryptionService implements IEncryption {
   /// Récupère ou génère la clé maître
   Future<encrypt_package.Key> _getMasterKey() async {
     if (_masterKey != null) return _masterKey!;
-    
+
     final storedKey = await _secureStorage.read(key: _masterKeyId);
-    
+
     if (storedKey != null) {
       _masterKey = encrypt_package.Key.fromBase64(storedKey);
       return _masterKey!;
     }
-    
+
     // Génération d'une nouvelle clé aléatoire
     final random = Random.secure();
-    final keyBytes = Uint8List.fromList(List<int>.generate(32, (_) => random.nextInt(256)));
-    final newKey = encrypt_package.Key(keyBytes);
-    
-    await _secureStorage.write(
-      key: _masterKeyId,
-      value: newKey.base64,
+    final keyBytes = Uint8List.fromList(
+      List<int>.generate(32, (_) => random.nextInt(256)),
     );
-    
+    final newKey = encrypt_package.Key(keyBytes);
+
+    await _secureStorage.write(key: _masterKeyId, value: newKey.base64);
+
     _masterKey = newKey;
     return _masterKey!;
   }
@@ -48,10 +47,12 @@ class EncryptionService implements IEncryption {
     try {
       final key = await _getMasterKey();
       final iv = encrypt_package.IV.fromSecureRandom(16);
-      final encrypter = encrypt_package.Encrypter(encrypt_package.AES(key, mode: encrypt_package.AESMode.gcm));
-      
+      final encrypter = encrypt_package.Encrypter(
+        encrypt_package.AES(key, mode: encrypt_package.AESMode.gcm),
+      );
+
       final encrypted = encrypter.encrypt(plainText, iv: iv);
-      
+
       // Retourne IV + cipherText en base64
       return '${iv.base64}:${encrypted.base64}';
     } catch (e) {
@@ -66,12 +67,14 @@ class EncryptionService implements IEncryption {
       if (parts.length != 2) {
         throw Exception('Format de chiffrement invalide');
       }
-      
+
       final iv = encrypt_package.IV.fromBase64(parts[0]);
       final encryptedData = encrypt_package.Encrypted.fromBase64(parts[1]);
       final key = await _getMasterKey();
-      final encrypter = encrypt_package.Encrypter(encrypt_package.AES(key, mode: encrypt_package.AESMode.gcm));
-      
+      final encrypter = encrypt_package.Encrypter(
+        encrypt_package.AES(key, mode: encrypt_package.AESMode.gcm),
+      );
+
       final decrypted = encrypter.decrypt(encryptedData, iv: iv);
       return decrypted;
     } catch (e) {
@@ -84,21 +87,21 @@ class EncryptionService implements IEncryption {
     // Utilise HKDF pour dériver une clé unique par carte
     final salt = utf8.encode('SmartHealthCardSalt');
     final info = utf8.encode('CardKey');
-    
+
     final inputKey = utf8.encode('$cardUid:$hospitalSecret');
-    
+
     // Création manuelle de HKDF (pour compatibilité)
     final pseudorandomKey = Hmac(sha256, inputKey).convert(salt).bytes;
     final List<int> derivedKey = [];
     int counter = 1;
-    
+
     while (derivedKey.length < 32) {
       final data = <int>[...pseudorandomKey, ...info, counter];
       final block = Hmac(sha256, pseudorandomKey).convert(data).bytes;
       derivedKey.addAll(block);
       counter++;
     }
-    
+
     return base64.encode(derivedKey.sublist(0, 32));
   }
 
@@ -114,23 +117,28 @@ class EncryptionService implements IEncryption {
   Future<bool> verifyPassword(String password, String hashed) async {
     final parts = hashed.split(':');
     if (parts.length != 2) return false;
-    
+
     final salt = parts[0];
     final expectedHash = parts[1];
-    
+
     final saltedPassword = '$salt:$password';
     final actualHash = sha256.convert(utf8.encode(saltedPassword)).toString();
-    
+
     return actualHash == expectedHash;
   }
 
   String _generateSalt() {
     final random = Random.secure();
-    return base64.encode(Uint8List.fromList(List<int>.generate(16, (_) => random.nextInt(256))));
+    return base64.encode(
+      Uint8List.fromList(List<int>.generate(16, (_) => random.nextInt(256))),
+    );
   }
 
   /// Génère une signature pour l'historique
-  Future<String> generateSignature(Map<String, dynamic> data, String agentId) async {
+  Future<String> generateSignature(
+    Map<String, dynamic> data,
+    String agentId,
+  ) async {
     final jsonString = jsonEncode(data);
     final hmac = Hmac(sha256, utf8.encode(agentId));
     final signature = hmac.convert(utf8.encode(jsonString)).toString();
@@ -138,7 +146,11 @@ class EncryptionService implements IEncryption {
   }
 
   /// Valide une signature
-  Future<bool> validateSignature(Map<String, dynamic> data, String agentId, String signature) async {
+  Future<bool> validateSignature(
+    Map<String, dynamic> data,
+    String agentId,
+    String signature,
+  ) async {
     final expectedSignature = await generateSignature(data, agentId);
     return expectedSignature == signature;
   }

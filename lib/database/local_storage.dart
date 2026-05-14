@@ -28,7 +28,7 @@ class LocalStorage implements IStorage {
   Future<void> savePatient(Patient patient) async {
     // Sauvegarde SQLite
     await _dbHelper.insertOrUpdatePatient(patient.toMap());
-    
+
     // Cache Hive pour accès rapide
     await _cache.put(patient.id, patient.toMap());
   }
@@ -40,7 +40,7 @@ class LocalStorage implements IStorage {
     if (cached != null) {
       return Patient.fromMap(Map<String, dynamic>.from(cached));
     }
-    
+
     // Sinon en SQLite
     final data = await _dbHelper.getPatient(id);
     if (data != null) {

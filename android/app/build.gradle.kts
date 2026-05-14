@@ -6,7 +6,7 @@ plugins {
 
 android {
     namespace = "com.example.smart_health_card"
-    compileSdk = 35  // ← Changé de 34 à 35
+    compileSdk = 35
     ndkVersion = "27.0.12077973"
 
     compileOptions {
@@ -21,7 +21,7 @@ android {
     defaultConfig {
         applicationId = "com.example.smart_health_card"
         minSdk = 24
-        targetSdk = 35  // ← Changé de 34 à 35
+        targetSdk = 35
         versionCode = 1
         versionName = "1.0.0"
     }

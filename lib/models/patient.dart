@@ -94,11 +94,16 @@ class Patient {
       treatments: List<String>.from(json['treatments']),
       medicalHistory: List<String>.from(json['medicalHistory']),
       emergencyContact: json['emergencyContact'],
-      createdAt: json['createdAt'] != null ? DateTime.parse(json['createdAt']) : null,
-      updatedAt: json['updatedAt'] != null ? DateTime.parse(json['updatedAt']) : null,
-      history: json['history'] != null
-          ? (json['history'] as List).map((e) => MedicalRecord.fromJson(e)).toList()
-          : [],
+      createdAt:
+          json['createdAt'] != null ? DateTime.parse(json['createdAt']) : null,
+      updatedAt:
+          json['updatedAt'] != null ? DateTime.parse(json['updatedAt']) : null,
+      history:
+          json['history'] != null
+              ? (json['history'] as List)
+                  .map((e) => MedicalRecord.fromJson(e))
+                  .toList()
+              : [],
     );
   }
 
@@ -110,9 +115,24 @@ class Patient {
       lastName: map['lastName'],
       birthDate: DateTime.parse(map['birthDate']),
       bloodType: map['bloodType'],
-      allergies: map['allergies'].toString().split(',').where((s) => s.isNotEmpty).toList(),
-      treatments: map['treatments'].toString().split(',').where((s) => s.isNotEmpty).toList(),
-      medicalHistory: map['medicalHistory'].toString().split(',').where((s) => s.isNotEmpty).toList(),
+      allergies:
+          map['allergies']
+              .toString()
+              .split(',')
+              .where((s) => s.isNotEmpty)
+              .toList(),
+      treatments:
+          map['treatments']
+              .toString()
+              .split(',')
+              .where((s) => s.isNotEmpty)
+              .toList(),
+      medicalHistory:
+          map['medicalHistory']
+              .toString()
+              .split(',')
+              .where((s) => s.isNotEmpty)
+              .toList(),
       emergencyContact: map['emergencyContact'],
       createdAt: DateTime.parse(map['createdAt']),
       updatedAt: DateTime.parse(map['updatedAt']),
