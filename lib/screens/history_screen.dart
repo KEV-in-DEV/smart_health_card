@@ -1,71 +1,55 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:smart_health_card/models/medical_record.dart';
-import 'package:smart_health_card/state/app_state.dart';
-import 'package:smart_health_card/utils/constants.dart';
-import 'package:smart_health_card/widgets/custom_card.dart';
 
-class HistoryScreen extends ConsumerWidget {
+import '../utils/constants.dart';
+import '../widgets/custom_card.dart';
+
+class HistoryScreen extends StatelessWidget {
   const HistoryScreen({super.key});
 
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final storage = ref.watch(storageProvider);
+  static const _actions = [
+    (
+      date: '12/05/2026 18:40',
+      action: 'Lecture carte patient',
+      agent: 'Agent BF-102',
+      hospital: 'CHU Yalgado Ouedraogo',
+    ),
+    (
+      date: '12/05/2026 16:15',
+      action: 'Modification traitements',
+      agent: 'Agent BF-102',
+      hospital: 'CMA de Pissy',
+    ),
+    (
+      date: '11/05/2026 09:10',
+      action: 'Creation carte',
+      agent: 'Agent BF-087',
+      hospital: 'CHR de Koudougou',
+    ),
+  ];
 
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text(AppStrings.history)),
       body: SafeArea(
-        child: FutureBuilder<List<MedicalRecord>>(
-          future: storage.getAllHistory(),
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(child: CircularProgressIndicator());
-            }
-            final actions = snapshot.data ?? [];
-            return ListView(
-              padding: const EdgeInsets.all(AppSpacing.md),
-              children: [
-                Text(
-                  'Actions récentes',
-                  style: Theme.of(context).textTheme.headlineSmall,
-                ),
-                const SizedBox(height: AppSpacing.md),
-                if (actions.isEmpty)
-                  const CustomCard(
-                    title: AppStrings.noData,
-                    subtitle:
-                        'Les lectures et écritures NFC seront enregistrées ici.',
-                    icon: Icons.history,
-                  )
-                else
-                  for (final item in actions)
-                    CustomCard(
-                      title: _actionLabel(item.action),
-                      subtitle:
-                          '${_formatDate(item.timestamp)}\n${item.agentName} - ${item.hospital}\n${item.details}',
-                      icon: Icons.history,
-                    ),
-              ],
-            );
-          },
+        child: ListView(
+          padding: const EdgeInsets.all(AppSpacing.md),
+          children: [
+            Text(
+              'Actions recentes',
+              style: Theme.of(context).textTheme.headlineSmall,
+            ),
+            const SizedBox(height: AppSpacing.md),
+            // TODO: remplacer par Storage.getHistory().
+            for (final item in _actions)
+              CustomCard(
+                title: item.action,
+                subtitle: '${item.date}\n${item.agent} - ${item.hospital}',
+                icon: Icons.history,
+              ),
+          ],
         ),
       ),
     );
-  }
-
-  static String _formatDate(DateTime date) {
-    return '${date.day.toString().padLeft(2, '0')}/'
-        '${date.month.toString().padLeft(2, '0')}/'
-        '${date.year} ${date.hour.toString().padLeft(2, '0')}:'
-        '${date.minute.toString().padLeft(2, '0')}';
-  }
-
-  static String _actionLabel(String action) {
-    return switch (action) {
-      'create' => 'Création de carte',
-      'read' => 'Lecture de carte',
-      'update' => 'Modification de carte',
-      _ => action,
-    };
   }
 }

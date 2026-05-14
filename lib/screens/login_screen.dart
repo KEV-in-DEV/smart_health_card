@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:smart_health_card/models/agent.dart';
-import 'package:smart_health_card/state/app_state.dart';
-import 'package:smart_health_card/utils/constants.dart';
-import 'package:smart_health_card/widgets/custom_button.dart';
+
+import '../state/app_state.dart';
+import '../utils/constants.dart';
+import '../widgets/custom_button.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -14,8 +14,8 @@ class LoginScreen extends ConsumerStatefulWidget {
 
 class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _agentController = TextEditingController(text: 'agent001');
-  final _passwordController = TextEditingController(text: '1234');
+  final _agentController = TextEditingController();
+  final _passwordController = TextEditingController();
   bool _isLoading = false;
   bool _hidePassword = true;
 
@@ -30,47 +30,20 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     if (!_formKey.currentState!.validate()) return;
 
     setState(() => _isLoading = true);
+    await Future<void>.delayed(const Duration(seconds: 1));
 
-    final storage = ref.read(storageProvider);
-    final encryption = ref.read(encryptionProvider);
-    final id = _agentController.text.trim();
+    if (!mounted) return;
+    setState(() => _isLoading = false);
+
+    final username = _agentController.text.trim();
     final password = _passwordController.text;
-
-    try {
-      Agent? agent = await storage.getAgent(id);
-
-      if (agent == null && id == 'agent001' && password == '1234') {
-        final hashedPassword = await encryption.hashPassword(password);
-        agent = Agent(
-          id: id,
-          name: 'Agent Smart Health',
-          hospital: 'Centre de santé',
-          hashedPassword: hashedPassword,
-        );
-        await storage.saveAgent(agent);
-      }
-
-      final isValid =
-          agent != null &&
-          await encryption.verifyPassword(password, agent.hashedPassword);
-
-      if (!mounted) return;
-      if (!isValid) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Identifiants invalides.')),
-        );
-        return;
-      }
-
-      ref.read(agentSessionProvider.notifier).login(agent);
+    if (username == 'agent001' && password == '1234') {
+      ref.read(agentSessionProvider.notifier).login(username);
       Navigator.of(context).pushNamedAndRemoveUntil('/home', (route) => false);
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Connexion impossible : $e')));
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Identifiants invalides.')), 
+      );
     }
   }
 
@@ -111,14 +84,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       textInputAction: TextInputAction.next,
                       decoration: const InputDecoration(
                         labelText: AppStrings.agentId,
-                        helperText: 'Compte test hors ligne : agent001',
                         prefixIcon: Icon(Icons.badge_outlined),
                       ),
-                      validator:
-                          (value) =>
-                              value == null || value.trim().isEmpty
-                                  ? AppStrings.requiredFields
-                                  : null,
+                      validator: (value) =>
+                          value == null || value.trim().isEmpty
+                          ? AppStrings.requiredFields
+                          : null,
                     ),
                     const SizedBox(height: AppSpacing.md),
                     TextFormField(
@@ -126,13 +97,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       obscureText: _hidePassword,
                       decoration: InputDecoration(
                         labelText: AppStrings.password,
-                        helperText: 'Mot de passe test : 1234',
                         prefixIcon: const Icon(Icons.lock_outline),
                         suffixIcon: IconButton(
-                          tooltip:
-                              _hidePassword
-                                  ? 'Afficher le mot de passe'
-                                  : 'Masquer le mot de passe',
+                          tooltip: _hidePassword
+                              ? 'Afficher le mot de passe'
+                              : 'Masquer le mot de passe',
                           icon: Icon(
                             _hidePassword
                                 ? Icons.visibility_outlined
@@ -143,11 +112,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           },
                         ),
                       ),
-                      validator:
-                          (value) =>
-                              value == null || value.isEmpty
-                                  ? AppStrings.requiredFields
-                                  : null,
+                      validator: (value) => value == null || value.isEmpty
+                          ? AppStrings.requiredFields
+                          : null,
                       onFieldSubmitted: (_) => _login(),
                     ),
                     const SizedBox(height: AppSpacing.lg),

@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:smart_health_card/models/public_info.dart';
-import 'package:smart_health_card/state/app_state.dart';
-import 'package:smart_health_card/utils/constants.dart';
-import 'package:smart_health_card/widgets/custom_button.dart';
-import 'package:smart_health_card/widgets/custom_card.dart';
+
+import '../state/app_state.dart';
+import '../utils/constants.dart';
+import '../widgets/custom_button.dart';
+import '../widgets/custom_card.dart';
 
 class QrScannerScreen extends ConsumerStatefulWidget {
   const QrScannerScreen({super.key});
@@ -14,27 +14,28 @@ class QrScannerScreen extends ConsumerStatefulWidget {
 }
 
 class _QrScannerScreenState extends ConsumerState<QrScannerScreen> {
-  PublicInfo? _info;
-  bool _isScanning = false;
+  bool _hasScanned = false;
 
-  Future<void> _scanQr() async {
-    setState(() => _isScanning = true);
-    try {
-      final info = await ref.read(qrServiceProvider).scanQR();
-      if (!mounted) return;
-      setState(() => _info = info);
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Scan QR impossible : $e')));
-    } finally {
-      if (mounted) setState(() => _isScanning = false);
-    }
+  void _simulateScan() {
+    setState(() => _hasScanned = true);
+  }
+
+  Map<String, String> _publicData() {
+    return const {
+      'Nom': 'Traore',
+      'Prénom': 'Issa',
+      'Groupe sanguin': 'B+',
+      'Contact d’urgence': '+226 70 12 34 56',
+    };
   }
 
   @override
   Widget build(BuildContext context) {
+    final isAgentConnected = ref.watch(isAgentConnectedProvider);
+    final fullData = isAgentConnected
+        ? ref.read(cardRepositoryProvider.notifier).findCardByName('Traore', 'Issa')
+        : null;
+
     return Scaffold(
       appBar: AppBar(title: const Text(AppStrings.scanQr)),
       body: SafeArea(
@@ -57,23 +58,37 @@ class _QrScannerScreenState extends ConsumerState<QrScannerScreen> {
             ),
             const SizedBox(height: AppSpacing.lg),
             CustomButton(
-              label: AppStrings.scanQr,
+              label: AppStrings.scanSimulation,
               icon: Icons.camera_alt_outlined,
-              isLoading: _isScanning,
-              onPressed: _scanQr,
+              onPressed: _simulateScan,
             ),
             const SizedBox(height: AppSpacing.lg),
-            if (_info != null)
+            if (_hasScanned)
               CustomCard(
-                title: AppStrings.publicDataOnly,
-                icon: Icons.verified_user_outlined,
+                title: isAgentConnected
+                    ? 'Infos patient complètes'
+                    : AppStrings.publicDataOnly,
+                icon: isAgentConnected
+                    ? Icons.health_and_safety
+                    : Icons.verified_user_outlined,
                 children: [
-                  _PublicInfo(label: 'Nom', value: _info!.name),
-                  _PublicInfo(label: 'Groupe sanguin', value: _info!.bloodType),
-                  _PublicInfo(
-                    label: 'Téléphone d’urgence',
-                    value: _info!.emergencyPhone,
-                  ),
+                  for (final entry in _publicData().entries)
+                    _PublicInfo(label: entry.key, value: entry.value),
+                  if (isAgentConnected && fullData != null) ...[
+                    const SizedBox(height: AppSpacing.sm),
+                    const Divider(),
+                    _PublicInfo(label: 'Date de naissance', value: fullData['Date de naissance'] ?? '-'),
+                    _PublicInfo(label: 'Allergies', value: fullData['Allergies'] ?? '-'),
+                    _PublicInfo(label: 'Traitements', value: fullData['Traitements'] ?? '-'),
+                    _PublicInfo(label: 'Antécédents', value: fullData['Antécédents'] ?? '-'),
+                  ],
+                  if (isAgentConnected && fullData == null)
+                    const Padding(
+                      padding: EdgeInsets.only(top: AppSpacing.sm),
+                      child: Text(
+                        'Carte inconnue en local : seules les informations publiques sont disponibles.',
+                      ),
+                    ),
                 ],
               ),
           ],

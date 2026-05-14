@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:smart_health_card/utils/constants.dart';
-import 'package:smart_health_card/widgets/custom_button.dart';
-import 'package:smart_health_card/widgets/nfc_status_card.dart';
+
+import '../utils/constants.dart';
+import '../widgets/custom_button.dart';
+import '../widgets/nfc_status_card.dart';
 
 class AgentRequiredScreen extends StatelessWidget {
   const AgentRequiredScreen({super.key});

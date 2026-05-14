@@ -1,16 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:smart_health_card/state/app_state.dart';
-import 'package:smart_health_card/utils/constants.dart';
-import 'package:smart_health_card/widgets/custom_button.dart';
-import 'package:smart_health_card/widgets/custom_card.dart';
+
+import '../state/app_state.dart';
+import '../utils/constants.dart';
+import '../widgets/custom_button.dart';
+import '../widgets/custom_card.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final agent = ref.watch(agentSessionProvider);
+    final agentName = ref.watch(agentSessionProvider) ?? 'Agent de santé';
     final isDark = ref.watch(themeModeProvider) == ThemeMode.dark;
 
     return Scaffold(
@@ -26,16 +27,13 @@ class SettingsScreen extends ConsumerWidget {
             const SizedBox(height: AppSpacing.md),
             CustomCard(
               title: AppStrings.connectedAgent,
-              subtitle:
-                  agent == null
-                      ? 'Aucun agent'
-                      : '${agent.name}\n${agent.hospital}',
+              subtitle: agentName,
               icon: Icons.badge_outlined,
             ),
-            const CustomCard(
+            CustomCard(
               title: AppStrings.offlineMode,
               subtitle:
-                  'Les données sont enregistrées localement. Internet n’est pas requis pour créer, lire ou consulter l’historique.',
+                  'Les écrans actuels utilisent des données locales et des simulations. Internet n’est pas requis.',
               icon: Icons.cloud_off_outlined,
             ),
             CustomCard(
@@ -57,7 +55,7 @@ class SettingsScreen extends ConsumerWidget {
             const CustomCard(
               title: AppStrings.security,
               subtitle:
-                  'Les données médicales NFC sont chiffrées par le service de sécurité. La modification est réservée aux agents connectés.',
+                  'La modification des cartes NFC est réservée aux agents connectés. Le chiffrement et les signatures seront raccordés par les services de données.',
               icon: Icons.security_outlined,
             ),
             CustomButton(

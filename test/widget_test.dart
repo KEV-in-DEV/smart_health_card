@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:smart_health_card/main.dart';
+
+import 'package:mon_app/main.dart';
 
 void main() {
   testWidgets('Smart Health Card affiche l’accès public', (

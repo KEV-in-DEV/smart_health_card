@@ -1,17 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:smart_health_card/database/local_storage.dart';
-import 'package:smart_health_card/models/agent.dart';
-import 'package:smart_health_card/services/encryption_service.dart';
-import 'package:smart_health_card/services/nfc_service.dart';
-import 'package:smart_health_card/services/qr_service.dart';
-
-final storageProvider = Provider<LocalStorage>((ref) => LocalStorage());
-final encryptionProvider = Provider<EncryptionService>(
-  (ref) => EncryptionService(),
-);
-final nfcServiceProvider = Provider<NfcService>((ref) => NfcService());
-final qrServiceProvider = Provider<QrService>((ref) => QrService());
 
 class ThemeModeController extends Notifier<ThemeMode> {
   @override
@@ -22,12 +10,12 @@ class ThemeModeController extends Notifier<ThemeMode> {
   }
 }
 
-class AgentSessionController extends Notifier<Agent?> {
+class AgentSessionController extends Notifier<String?> {
   @override
-  Agent? build() => null;
+  String? build() => null;
 
-  void login(Agent agent) {
-    state = agent;
+  void login(String agentName) {
+    state = agentName;
   }
 
   void logout() {
@@ -39,10 +27,34 @@ final themeModeProvider = NotifierProvider<ThemeModeController, ThemeMode>(
   ThemeModeController.new,
 );
 
-final agentSessionProvider = NotifierProvider<AgentSessionController, Agent?>(
+final agentSessionProvider = NotifierProvider<AgentSessionController, String?>(
   AgentSessionController.new,
 );
 
 final isAgentConnectedProvider = Provider<bool>((ref) {
   return ref.watch(agentSessionProvider) != null;
 });
+
+class CardRepositoryController extends Notifier<Map<String, Map<String, String>>> {
+  @override
+  Map<String, Map<String, String>> build() => {};
+
+  void addCard(Map<String, String> data) {
+    final key = _key(data['Nom'], data['Prénom']);
+    state = {
+      ...state,
+      key: data,
+    };
+  }
+
+  Map<String, String>? findCardByName(String nom, String prenom) {
+    return state[_key(nom, prenom)];
+  }
+
+  String _key(String? nom, String? prenom) {
+    return '${nom?.trim().toLowerCase() ?? ''}|${prenom?.trim().toLowerCase() ?? ''}';
+  }
+}
+
+final cardRepositoryProvider = NotifierProvider<CardRepositoryController,
+    Map<String, Map<String, String>>>(CardRepositoryController.new);

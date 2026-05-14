@@ -1,26 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:smart_health_card/database/local_storage.dart';
-import 'package:smart_health_card/models/patient.dart';
-import 'package:smart_health_card/screens/agent_required_screen.dart';
-import 'package:smart_health_card/screens/card_label_screen.dart';
-import 'package:smart_health_card/screens/history_screen.dart';
-import 'package:smart_health_card/screens/home_screen.dart';
-import 'package:smart_health_card/screens/login_screen.dart';
-import 'package:smart_health_card/screens/nfc_write_screen.dart';
-import 'package:smart_health_card/screens/public_access_screen.dart';
-import 'package:smart_health_card/screens/qr_scanner_screen.dart';
-import 'package:smart_health_card/screens/read_card_screen.dart';
-import 'package:smart_health_card/screens/settings_screen.dart';
-import 'package:smart_health_card/screens/write_card_screen.dart';
-import 'package:smart_health_card/services/qr_service.dart';
-import 'package:smart_health_card/state/app_state.dart';
-import 'package:smart_health_card/utils/constants.dart';
 
-Future<void> main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  await LocalStorage.init();
+import 'screens/agent_required_screen.dart';
+import 'screens/card_label_screen.dart';
+import 'screens/history_screen.dart';
+import 'screens/home_screen.dart';
+import 'screens/login_screen.dart';
+import 'screens/nfc_write_screen.dart';
+import 'screens/public_access_screen.dart';
+import 'screens/public_nfc_read_screen.dart';
+import 'screens/qr_scanner_screen.dart';
+import 'screens/read_card_screen.dart';
+import 'screens/settings_screen.dart';
+import 'screens/write_card_screen.dart';
+import 'state/app_state.dart';
+import 'utils/constants.dart';
+
+void main() {
   runApp(const ProviderScope(child: MyApp()));
 }
 
@@ -34,7 +31,6 @@ class MyApp extends ConsumerWidget {
     return MaterialApp(
       title: AppStrings.appName,
       debugShowCheckedModeBanner: false,
-      navigatorKey: navigatorKey,
       theme: _buildTheme(Brightness.light),
       darkTheme: _buildTheme(Brightness.dark),
       themeMode: themeMode,
@@ -53,15 +49,19 @@ class MyApp extends ConsumerWidget {
               '/login' => const LoginScreen(),
               '/home' => HomeScreen(
                 agentName:
-                    ref.read(agentSessionProvider)?.name ??
+                    ref.read(agentSessionProvider) ??
                     (settings.arguments as String?) ??
                     'Agent de santé',
               ),
               '/read-card' => guarded(const ReadCardScreen()),
               '/write-card' => guarded(const WriteCardScreen()),
               '/nfc-write' => guarded(
-                NfcWriteScreen(patient: settings.arguments as Patient),
+                NfcWriteScreen(
+                  patientData:
+                      (settings.arguments as Map<String, String>?) ?? {},
+                ),
               ),
+              '/public-nfc-read' => const PublicNfcReadScreen(),
               '/qr-scanner' => const QrScannerScreen(),
               '/history' => guarded(const HistoryScreen()),
               '/settings' => guarded(const SettingsScreen()),
@@ -91,8 +91,9 @@ class MyApp extends ConsumerWidget {
 
     return ThemeData(
       colorScheme: colorScheme,
-      scaffoldBackgroundColor:
-          isDark ? AppColors.darkBackground : AppColors.background,
+      scaffoldBackgroundColor: isDark
+          ? AppColors.darkBackground
+          : AppColors.background,
       textTheme: GoogleFonts.robotoTextTheme().apply(
         bodyColor: isDark ? AppColors.darkText : AppColors.text,
         displayColor: isDark ? AppColors.darkText : AppColors.text,

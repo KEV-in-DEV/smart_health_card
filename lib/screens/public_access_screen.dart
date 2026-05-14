@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:smart_health_card/state/app_state.dart';
-import 'package:smart_health_card/utils/constants.dart';
-import 'package:smart_health_card/widgets/custom_button.dart';
-import 'package:smart_health_card/widgets/custom_card.dart';
+
+import '../state/app_state.dart';
+import '../utils/constants.dart';
+import '../widgets/custom_button.dart';
+import '../widgets/custom_card.dart';
 
 class PublicAccessScreen extends ConsumerWidget {
   const PublicAccessScreen({super.key});
@@ -17,8 +18,9 @@ class PublicAccessScreen extends ConsumerWidget {
         title: const Text(AppStrings.appName),
         actions: [
           IconButton(
-            tooltip:
-                isDark ? 'Passer au thème clair' : 'Passer au thème sombre',
+            tooltip: isDark
+                ? 'Passer au theme clair'
+                : 'Passer au theme sombre',
             icon: Icon(isDark ? Icons.light_mode : Icons.dark_mode),
             onPressed: () => ref.read(themeModeProvider.notifier).toggle(),
           ),
@@ -42,12 +44,12 @@ class PublicAccessScreen extends ConsumerWidget {
             ),
             const SizedBox(height: AppSpacing.sm),
             Text(
-              'Sans connexion, vous pouvez seulement scanner le QR code d’une carte déjà créée.',
+              'Sans connexion, vous pouvez seulement scanner un QR code ou approcher une carte NFC pour voir les informations publiques.',
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodyLarge,
             ),
             const SizedBox(height: AppSpacing.lg),
-            const CustomCard(
+            CustomCard(
               title: AppStrings.publicDataOnly,
               subtitle:
                   'Nom, prénoms, groupe sanguin et contact urgence uniquement.',
@@ -58,6 +60,13 @@ class PublicAccessScreen extends ConsumerWidget {
               icon: Icons.qr_code_scanner,
               backgroundColor: AppColors.accent,
               onPressed: () => Navigator.of(context).pushNamed('/qr-scanner'),
+            ),
+            const SizedBox(height: AppSpacing.md),
+            CustomButton(
+              label: 'Approcher une carte NFC publique',
+              icon: Icons.nfc,
+              backgroundColor: AppColors.burkinaOrange,
+              onPressed: () => Navigator.of(context).pushNamed('/public-nfc-read'),
             ),
             const SizedBox(height: AppSpacing.md),
             CustomButton(

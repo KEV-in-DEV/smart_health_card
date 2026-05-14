@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:smart_health_card/models/patient.dart';
-import 'package:smart_health_card/state/app_state.dart';
-import 'package:smart_health_card/utils/constants.dart';
-import 'package:smart_health_card/widgets/custom_button.dart';
-import 'package:smart_health_card/widgets/custom_card.dart';
+
+import '../state/app_state.dart';
+import '../utils/constants.dart';
+import '../widgets/custom_button.dart';
+import '../widgets/custom_card.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key, required this.agentName});
@@ -17,6 +17,12 @@ class HomeScreen extends ConsumerStatefulWidget {
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   int _selectedIndex = 0;
+
+  final _recentPatients = const [
+    ('Ouedraogo Awa', 'Groupe O+ - Allergie penicilline'),
+    ('Traore Issa', 'Groupe B+ - Hypertension'),
+    ('Kabore Mariam', 'Groupe A- - Asthme'),
+  ];
 
   void _openBottomTab(int index) {
     setState(() => _selectedIndex = index);
@@ -32,15 +38,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final isDark = ref.watch(themeModeProvider) == ThemeMode.dark;
-    final storage = ref.watch(storageProvider);
 
     return Scaffold(
       appBar: AppBar(
         title: const Text(AppStrings.appName),
         actions: [
           IconButton(
-            tooltip:
-                isDark ? 'Passer au thème clair' : 'Passer au thème sombre',
+            tooltip: isDark
+                ? 'Passer au theme clair'
+                : 'Passer au theme sombre',
             icon: Icon(isDark ? Icons.light_mode : Icons.dark_mode),
             onPressed: () => ref.read(themeModeProvider.notifier).toggle(),
           ),
@@ -90,36 +96,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               style: Theme.of(context).textTheme.titleLarge,
             ),
             const SizedBox(height: AppSpacing.md),
-            FutureBuilder<List<Patient>>(
-              future: storage.getRecentPatients(limit: 5),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const LinearProgressIndicator();
-                }
-                final patients = snapshot.data ?? [];
-                if (patients.isEmpty) {
-                  return const CustomCard(
-                    title: AppStrings.noData,
-                    subtitle:
-                        'Les cartes lues ou créées apparaîtront ici hors ligne.',
-                    icon: Icons.credit_card_off_outlined,
-                  );
-                }
-                return Column(
-                  children: [
-                    for (final patient in patients)
-                      CustomCard(
-                        title: patient.fullName,
-                        subtitle:
-                            'Groupe ${patient.bloodType} - ${patient.age} ans',
-                        icon: Icons.credit_card,
-                        onTap:
-                            () => Navigator.of(context).pushNamed('/read-card'),
-                      ),
-                  ],
-                );
-              },
-            ),
+            // TODO: remplacer par Storage.getRecentPatients().
+            for (final patient in _recentPatients)
+              CustomCard(
+                title: patient.$1,
+                subtitle: patient.$2,
+                icon: Icons.credit_card,
+                onTap: () => Navigator.of(context).pushNamed('/read-card'),
+              ),
           ],
         ),
       ),

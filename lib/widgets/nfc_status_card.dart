@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:smart_health_card/utils/constants.dart';
-import 'package:smart_health_card/widgets/custom_card.dart';
+
+import '../utils/constants.dart';
+import 'custom_card.dart';
 
 enum NfcUiStatus {
   nfcDisabled,
@@ -62,7 +63,7 @@ class NfcStatusCard extends StatelessWidget {
       ),
       NfcUiStatus.detected => const _NfcStatusConfig(
         title: AppStrings.cardDetected,
-        detail: 'Vérification de la carte en cours.',
+        detail: 'Verification de la carte en cours.',
         icon: Icons.credit_card,
         color: AppColors.burkinaGreen,
         showProgress: true,

@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:smart_health_card/models/public_info.dart';
-import 'package:smart_health_card/services/qr_service.dart';
-import 'package:smart_health_card/utils/constants.dart';
-import 'package:smart_health_card/widgets/custom_button.dart';
-import 'package:smart_health_card/widgets/custom_card.dart';
+import 'package:qr_flutter/qr_flutter.dart';
+
+import '../utils/constants.dart';
+import '../widgets/custom_button.dart';
+import '../widgets/custom_card.dart';
 
 class CardLabelScreen extends StatelessWidget {
   const CardLabelScreen({super.key, required this.data});
@@ -12,11 +12,18 @@ class CardLabelScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final info = PublicInfo(
-      name: '${data['Nom'] ?? ''} ${data['Prenom'] ?? ''}'.trim(),
-      bloodType: data['Groupe sanguin'] ?? '',
-      emergencyPhone: data['Contact urgence'] ?? '',
-    );
+    final publicData = {
+      'Nom': data['Nom'] ?? '',
+      'Prenom': data['Prenom'] ?? '',
+      'Groupe sanguin': data['Groupe sanguin'] ?? '',
+      'Contact urgence': data['Contact urgence'] ?? '',
+    };
+    final qrPayload =
+        'SMART_HEALTH_CARD_PUBLIC|'
+        'nom=${publicData['Nom']}|'
+        'prenom=${publicData['Prenom']}|'
+        'groupe=${publicData['Groupe sanguin']}|'
+        'urgence=${publicData['Contact urgence']}';
 
     return Scaffold(
       appBar: AppBar(title: const Text(AppStrings.labelPreview)),
@@ -35,16 +42,21 @@ class CardLabelScreen extends StatelessWidget {
             ),
             const SizedBox(height: AppSpacing.lg),
             CustomCard(
-              title: info.name,
+              title: '${publicData['Nom']} ${publicData['Prenom']}',
               subtitle:
-                  'Groupe sanguin : ${info.bloodType}\nContact d’urgence : ${info.emergencyPhone}',
+                  'Groupe sanguin : ${publicData['Groupe sanguin']}\nContact d’urgence : ${publicData['Contact urgence']}',
               icon: Icons.badge_outlined,
               children: [
                 Center(
                   child: Container(
                     color: AppColors.white,
                     padding: const EdgeInsets.all(AppSpacing.md),
-                    child: QrService().generateQR(info),
+                    child: QrImageView(
+                      data: qrPayload,
+                      version: QrVersions.auto,
+                      size: 210,
+                      backgroundColor: AppColors.white,
+                    ),
                   ),
                 ),
               ],
@@ -53,6 +65,7 @@ class CardLabelScreen extends StatelessWidget {
               label: AppStrings.printLabel,
               icon: Icons.print,
               onPressed: () {
+                // TODO: remplacer par un service d'impression/export PDF si l’équipe l’ajoute.
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
                     content: Text('Fonction impression à connecter plus tard.'),
@@ -65,10 +78,9 @@ class CardLabelScreen extends StatelessWidget {
               label: AppStrings.home,
               icon: Icons.home_outlined,
               backgroundColor: AppColors.mutedText,
-              onPressed:
-                  () => Navigator.of(
-                    context,
-                  ).popUntil((route) => route.settings.name == '/home'),
+              onPressed: () => Navigator.of(
+                context,
+              ).popUntil((route) => route.settings.name == '/home'),
             ),
           ],
         ),

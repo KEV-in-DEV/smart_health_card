@@ -1,6 +1,6 @@
 {
-    "name": "smart_health_card",
-    "short_name": "smart_health_card",
+    "name": "mon_app",
+    "short_name": "mon_app",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
